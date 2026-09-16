@@ -1,75 +1,178 @@
-# React, TypeScript, Vite
+# ResolveHub
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A simple issue tracking and support management system built with React, TypeScript and Supabase.
 
-Currently, two official plugins are available:
+ **Live site:** https://roshitha05.github.io/resolvehub/
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## About
 
-## React Compiler
+ResolveHub is a support issue tracker where users can create an account, submit issues and keep track of their progress.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+I built this project to work with React and TypeScript on the frontend while using Supabase for authentication and database management. I also wanted the project to cover more than just the application itself, so testing and deployment are handled with Vitest and GitHub Actions.
 
-## Expanding the ESLint configuration
+## Features
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- User registration and login
+- Email verification
+- Protected routes and persistent sessions
+- Create support issues
+- Low, Medium and High priority levels
+- Open, In Progress and Resolved statuses
+- Search issues by title or description
+- Filter by priority and status
+- Individual issue details
+- Update issue status
+- Dashboard with issue statistics
+- User-specific issue access
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Tech Stack
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+| | |
+| --- | --- |
+| Frontend | React, TypeScript |
+| Build | Vite |
+| Routing | React Router |
+| Backend | Supabase |
+| Database | PostgreSQL |
+| Authentication | Supabase Auth |
+| Testing | Vitest, React Testing Library |
+| CI/CD | GitHub Actions |
+| Hosting | GitHub Pages |
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## How it works
 
+After signing in, users are taken to their dashboard where they can see a breakdown of their current issues and their three most recent requests.
+
+New issues require a title, description and priority. Once created, they can be viewed from the Issues page, searched by title or description, and filtered by status or priority.
+
+Opening an issue shows its full details and allows its status to be changed between Open, In Progress and Resolved.
+
+## Authentication and RLS
+
+Authentication is handled through Supabase Auth.
+
+Each issue stores the ID of the user who created it. I use Supabase Row Level Security (RLS) to make sure users can only access their own issues rather than relying only on checks in the frontend.
+
+For example:
+
+```sql
+create policy "Users can view own issues"
+on public.issues
+for select
+to authenticated
+using (
+  auth.uid() = user_id
+);
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+Similar policies are used when creating and updating issues.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+The `user_id` foreign key also uses `ON DELETE CASCADE`, so issues belonging to a deleted account do not remain in the database.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Testing
 
+The project currently has three automated tests covering the Issues page:
+
+- displaying issues returned from Supabase
+- searching for an issue
+- filtering issues by status
+
+Run them with:
+
+```bash
+npm run test:run
 ```
+
+You can also run:
+
+```bash
+npm run lint
+npm run build
+```
+
+## CI/CD
+
+Changes pushed to `main` run through a GitHub Actions workflow.
+
+The workflow:
+
+1. installs dependencies
+2. runs the Vitest tests
+3. runs ESLint
+4. builds the application
+5. deploys the build to GitHub Pages
+
+The deployment uses Node.js 22.
+
+## Project Structure
+
+```text
+src/
+├── components/
+│   ├── header.tsx
+│   └── sidebar.tsx
+├── pages/
+│   ├── createissue.tsx
+│   ├── dashboard.tsx
+│   ├── issuedetails.tsx
+│   ├── issues.tsx
+│   ├── issues.test.tsx
+│   ├── login.tsx
+│   └── register.tsx
+├── test/
+│   └── setup.ts
+├── App.tsx
+├── index.css
+├── main.tsx
+└── supabase.ts
+```
+
+## Running Locally
+
+Clone the repository:
+
+```bash
+git clone https://github.com/roshitha05/resolvehub.git
+cd resolvehub
+```
+
+Install the dependencies:
+
+```bash
+npm install
+```
+
+Create a `.env` file:
+
+```env
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_publishable_key
+```
+
+Then start the development server:
+
+```bash
+npm run dev
+```
+
+## Documentation
+
+More detail on the database design, RLS policies, testing, implementation and deployment is available in the technical report:
+
+[ResolveHub Technical Project Report](docs/ResolveHub-Technical-Report.pdf)
+
+## Future Improvements
+
+There are a few things I'd like to add later, including:
+
+- support staff roles and issue assignment
+- comments on issues
+- attachments
+- notifications
+- issue history
+- pagination
+- more automated tests
+
+## License
+
+MIT
