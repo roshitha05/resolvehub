@@ -21,7 +21,7 @@ function Register() {
       email,
       password,
       options: {
-        emailRedirectTo: window.location.origin,
+        emailRedirectTo: window.location.href.split('#')[0],
       },
     })
 
