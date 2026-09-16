@@ -4,28 +4,48 @@ import { supabase } from '../supabase'
 
 function CreateIssue() {
   const navigate = useNavigate()
+
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [priority, setPriority] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
 
-  const handleSubmit = async (event: SyntheticEvent<HTMLFormElement>) => {
+  const handleSubmit = async (
+    event: SyntheticEvent<HTMLFormElement>,
+  ) => {
     event.preventDefault()
+
+    setSubmitting(true)
+    setErrorMessage('')
+
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
+
+    if (userError || !user) {
+      setErrorMessage('You must be signed in to create an issue.')
+      setSubmitting(false)
+      return
+    }
 
     const { error } = await supabase
       .from('issues')
       .insert({
-      title,
-      description,
-      priority,
-    })
+        title,
+        description,
+        priority,
+        user_id: user.id,
+      })
 
     if (error) {
       console.error('Error creating issue:', error)
+      setErrorMessage('Unable to create issue. Please try again.')
+      setSubmitting(false)
       return
-
     }
 
-    console.log('Issue created successfully')
     navigate('/issues')
   }
 
@@ -41,6 +61,7 @@ function CreateIssue() {
       <form className="issue-form" onSubmit={handleSubmit}>
         <div className="form-group">
           <label htmlFor="title">Issue Title</label>
+
           <input
             id="title"
             type="text"
@@ -53,6 +74,7 @@ function CreateIssue() {
 
         <div className="form-group">
           <label htmlFor="description">Description</label>
+
           <textarea
             id="description"
             rows={6}
@@ -60,25 +82,31 @@ function CreateIssue() {
             value={description}
             onChange={(event) => setDescription(event.target.value)}
             required
-          ></textarea>
+          />
         </div>
 
         <div className="form-group">
           <label htmlFor="priority">Priority</label>
-          <select 
-            id="priority" 
+
+          <select
+            id="priority"
             value={priority}
             onChange={(event) => setPriority(event.target.value)}
             required
-            >
+          >
             <option value="" disabled>
               Select priority
             </option>
+
             <option value="low">Low</option>
             <option value="medium">Medium</option>
             <option value="high">High</option>
           </select>
         </div>
+
+        {errorMessage && (
+          <p className="auth-error">{errorMessage}</p>
+        )}
 
         <div className="form-actions">
           <button
@@ -89,9 +117,13 @@ function CreateIssue() {
             Cancel
           </button>
 
-          <button type="submit" className="primary-button">
+          <button
+            type="submit"
+            className="primary-button"
+            disabled={submitting}
+          >
             <i className="bi bi-plus-lg"></i>
-            Create Issue
+            {submitting ? 'Creating...' : 'Create Issue'}
           </button>
         </div>
       </form>
