@@ -27,7 +27,7 @@ I built this project to work with React and TypeScript on the frontend while usi
 
 ## Tech Stack
 
-| | |
+| Area | Technology |
 | --- | --- |
 | Frontend | React, TypeScript |
 | Build | Vite |
